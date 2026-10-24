@@ -1,0 +1,1 @@
+"""Competitive intelligence report generation."""

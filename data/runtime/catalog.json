@@ -1,0 +1,39 @@
+{
+  "documents": 4,
+  "chunks": 4,
+  "embedding_dim": 1024,
+  "products": [
+    {
+      "name": "示例产品 A",
+      "documents": 1,
+      "chunks": 1,
+      "sections": [
+        "图鉴"
+      ]
+    },
+    {
+      "name": "示例产品 B",
+      "documents": 1,
+      "chunks": 1,
+      "sections": [
+        "玩法"
+      ]
+    },
+    {
+      "name": "示例产品 C",
+      "documents": 1,
+      "chunks": 1,
+      "sections": [
+        "运营"
+      ]
+    },
+    {
+      "name": "示例产品 D",
+      "documents": 1,
+      "chunks": 1,
+      "sections": [
+        "世界观"
+      ]
+    }
+  ]
+}

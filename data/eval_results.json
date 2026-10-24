@@ -1,0 +1,97 @@
+{
+  "summary": {
+    "questions": 4,
+    "retrieval_questions": 4,
+    "hit@5": 1.0,
+    "precision@5": 1.0,
+    "recall@5": 1.0,
+    "mrr": 1.0,
+    "elapsed_seconds": 0.0
+  },
+  "rows": [
+    {
+      "id": "demo-1",
+      "question": "青羽兽是什么属性或玩法？",
+      "products": [
+        "示例产品 A"
+      ],
+      "expected": [
+        "demo_1"
+      ],
+      "retrieved": [
+        "demo_1"
+      ],
+      "scores": [
+        0.5657
+      ],
+      "retrieval_evaluated": true,
+      "hit": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "demo-2",
+      "question": "赤焰兽是什么属性或玩法？",
+      "products": [
+        "示例产品 B"
+      ],
+      "expected": [
+        "demo_2"
+      ],
+      "retrieved": [
+        "demo_2"
+      ],
+      "scores": [
+        0.7071
+      ],
+      "retrieval_evaluated": true,
+      "hit": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "demo-3",
+      "question": "潮汐兽是什么属性或玩法？",
+      "products": [
+        "示例产品 C"
+      ],
+      "expected": [
+        "demo_3"
+      ],
+      "retrieved": [
+        "demo_3"
+      ],
+      "scores": [
+        0.5657
+      ],
+      "retrieval_evaluated": true,
+      "hit": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "demo-4",
+      "question": "岩甲兽是什么属性或玩法？",
+      "products": [
+        "示例产品 D"
+      ],
+      "expected": [
+        "demo_4"
+      ],
+      "retrieved": [
+        "demo_4"
+      ],
+      "scores": [
+        0.495
+      ],
+      "retrieval_evaluated": true,
+      "hit": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0
+    }
+  ]
+}

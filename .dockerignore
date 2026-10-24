@@ -1,0 +1,11 @@
+.git
+.env
+.superpowers
+backend/__pycache__
+frontend/node_modules
+frontend/dist
+data/database
+data/runtime/index/platform_index.pkl
+data/runtime/index/platform_index.manifest.json
+data/runtime/index/*.tmp
+*.log

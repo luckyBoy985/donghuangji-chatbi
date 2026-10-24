@@ -1,0 +1,195 @@
+name: donghuangji-chatbi
+
+x-api-environment: &api-environment
+  APP_ENV: production
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-chatbi}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-chatbi}
+  REDIS_URL: redis://redis:6379/0
+  BGE_M3_PATH: /models/bge-m3
+  BGE_RERANKER_PATH: /models/bge-reranker-base
+  MODEL_DEVICE: cuda
+  DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?DEEPSEEK_API_KEY is required}
+  DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+  LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+  BOOTSTRAP_ADMIN_TOKEN: ${BOOTSTRAP_ADMIN_TOKEN:?BOOTSTRAP_ADMIN_TOKEN is required}
+  MCP_ACCESS_TOKEN: ${MCP_ACCESS_TOKEN:?MCP_ACCESS_TOKEN is required}
+  SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+  SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-7}
+  MAX_LOGIN_FAILURES: ${MAX_LOGIN_FAILURES:-10}
+  LOGIN_WINDOW_SECONDS: ${LOGIN_WINDOW_SECONDS:-900}
+  ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://127.0.0.1}
+  S3_ENDPOINT: http://minio:9000
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-chatbi}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-change-me-minio}
+  S3_BUCKET: ${S3_BUCKET:-chatbi}
+  LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-120}
+  QA_DAILY_LIMIT_PER_USER: ${QA_DAILY_LIMIT_PER_USER:-200}
+  REPORT_DAILY_LIMIT_PER_USER: ${REPORT_DAILY_LIMIT_PER_USER:-30}
+  ADMIN_DATA_DAILY_LIMIT: ${ADMIN_DATA_DAILY_LIMIT:-50}
+  QA_MAX_CONCURRENCY: ${QA_MAX_CONCURRENCY:-2}
+  QA_QUEUE_TIMEOUT_SECONDS: ${QA_QUEUE_TIMEOUT_SECONDS:-15}
+  INGEST_SOFT_TIME_LIMIT: ${INGEST_SOFT_TIME_LIMIT:-1800}
+  INGEST_TIME_LIMIT: ${INGEST_TIME_LIMIT:-1860}
+  STALE_JOB_HOURS: ${STALE_JOB_HOURS:-6}
+  CRAWL_DELAY_SECONDS: ${CRAWL_DELAY_SECONDS:-1}
+  AUDIT_RETENTION_DAYS: ${AUDIT_RETENTION_DAYS:-180}
+
+x-app-security: &app-security
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=1g
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chatbi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-chatbi}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chatbi} -d ${POSTGRES_DB:-chatbi}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 2g
+    cpus: 2.0
+    pids_limit: 256
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-chatbi}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change-me-minio}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    mem_limit: 2g
+    cpus: 2.0
+    pids_limit: 256
+
+  api:
+    build: .
+    image: donghuangji-chatbi:latest
+    restart: unless-stopped
+    environment:
+      <<: *api-environment
+      RUN_MIGRATIONS: "1"
+      INIT_STORAGE: "1"
+      SEED_DATA: "1"
+    volumes:
+      - ${MODEL_ROOT:-../BAAI}:/models:ro
+      - ./data/runtime:/app/data/runtime
+      - ./data/legacy:/legacy:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    gpus: all
+    <<: *app-security
+    mem_limit: 8g
+    cpus: 4.0
+    pids_limit: 256
+    init: true
+
+  worker:
+    image: donghuangji-chatbi:latest
+    restart: unless-stopped
+    command: ["celery", "-A", "backend.app.core.workers.celery_app", "worker", "--loglevel=INFO", "--concurrency=1"]
+    environment: *api-environment
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A backend.app.core.workers.celery_app inspect ping -t 5 | grep -q pong",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${MODEL_ROOT:-../BAAI}:/models:ro
+      - ./data/runtime:/app/data/runtime
+    gpus: all
+    <<: *app-security
+    mem_limit: 8g
+    cpus: 4.0
+    pids_limit: 512
+    init: true
+
+  beat:
+    image: donghuangji-chatbi:latest
+    restart: unless-stopped
+    command:
+      [
+        "celery",
+        "-A",
+        "backend.app.core.workers.celery_app",
+        "beat",
+        "--loglevel=INFO",
+        "--schedule=/tmp/celerybeat-schedule",
+      ]
+    environment: *api-environment
+    depends_on:
+      redis:
+        condition: service_healthy
+    <<: *app-security
+    mem_limit: 512m
+    cpus: 0.5
+    pids_limit: 128
+    init: true
+    healthcheck:
+      disable: true
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:

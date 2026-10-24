@@ -1,0 +1,4 @@
+{"id": "demo-1", "question": "青羽兽是什么属性或玩法？", "dimension": "图鉴", "products": ["示例产品 A"], "expected_doc_ids": ["demo_1"], "answer_points": "风属性，擅长高速群体攻击", "expect_gap": false}
+{"id": "demo-2", "question": "赤焰兽是什么属性或玩法？", "dimension": "玩法", "products": ["示例产品 B"], "expected_doc_ids": ["demo_2"], "answer_points": "火属性，核心玩法是进化与升星", "expect_gap": false}
+{"id": "demo-3", "question": "潮汐兽是什么属性或玩法？", "dimension": "运营", "products": ["示例产品 C"], "expected_doc_ids": ["demo_3"], "answer_points": "水属性，采用双周版本更新", "expect_gap": false}
+{"id": "demo-4", "question": "岩甲兽是什么属性或玩法？", "dimension": "世界观", "products": ["示例产品 D"], "expected_doc_ids": ["demo_4"], "answer_points": "土属性，强调大地图探索", "expect_gap": false}
