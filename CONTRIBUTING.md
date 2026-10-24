@@ -3,7 +3,7 @@
 ## Development
 
 1. Copy `.env.example` to `.env` and replace every placeholder.
-2. Install Python 3.12 and Node.js 20.
+2. Install Python 3.12 and Node.js 22.
 3. Install backend test dependencies with `pip install -e "backend[test]"`.
 4. Install frontend dependencies with `npm ci` inside `frontend`.
 5. Run `scripts/test.ps1 -SkipEval` before opening a pull request.

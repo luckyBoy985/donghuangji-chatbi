@@ -64,7 +64,7 @@ python backend/scripts/create_demo_data.py --force
 
 - Docker Desktop 或 Docker Engine + Compose
 - Python 3.12（本地测试和数据脚本）
-- Node.js 20+（前端开发）
+- Node.js 22+（前端开发）
 - 可选 NVIDIA GPU；CPU 模式可把 `MODEL_DEVICE` 改为 `cpu`
 - 本地 BGE-M3 与 BGE-Reranker 模型目录
 
